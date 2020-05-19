@@ -1,0 +1,28 @@
+def rand(seed) {
+  let a = 1103515245, c = 12345, m = 2147483648 in
+    ((a * seed + c) % m) / 16
+}
+
+def list(x) {
+  (x, false)
+}
+
+def list_n(l, n) {
+  if n == 0: l
+  else: list_n((n - 1, l), n - 1)
+}
+def n_rand(l, n) {
+  if n == 0:
+    l
+  else:
+    let x = rand(l[0]) in
+      if x % 3 == 0:
+        begin
+          list_n((0, false), x % 20);
+          n_rand((x, l), n - 1);
+        end
+      else:
+        n_rand((x, l), n - 1)
+}
+
+n_rand(list(input(0)), input(1))

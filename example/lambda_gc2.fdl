@@ -1,0 +1,5 @@
+let q = 3, h = (\x -> x + q) in
+begin
+  let y = 6, f = (\x -> x / y) in 17;
+  let a = 13, g = (\b -> a * b) in h(g(7));
+end

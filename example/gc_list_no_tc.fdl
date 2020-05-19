@@ -1,0 +1,15 @@
+def list(x) {
+ (x, false)
+}
+
+def listn(n, l) {
+  if n == 0:
+    l
+  else:
+    begin
+      let x = (n * 17, l, 2) in x;
+      (n, listn(n - 1, l));
+    end
+}
+
+listn(20, list(0))

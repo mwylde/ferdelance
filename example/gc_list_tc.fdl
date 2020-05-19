@@ -1,0 +1,12 @@
+def list(x) {
+ (x, false)
+}
+
+def listn(n, l) {
+  if n == 0:
+    l
+  else:
+    listn(n - 1, (n, l))
+}
+
+listn(20, list(0))

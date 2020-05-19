@@ -1,0 +1,67 @@
+// list.fdl
+// a simple list library built on pairs
+
+def list(x) { (x, false) }
+
+def head(x) { x[0] }
+
+def tail(x) {
+  if isBool(x[1]): x[0]
+  else: tail(x[1])
+}
+
+def len(x) {
+  if x == false: 0
+  else: 1 + len(x[1])
+}
+
+def idx(l, i) {
+  if i == 0: l[0]
+  else: idx(l[1], i - 1)
+}
+
+def sum(l) {
+  if l == false: 0
+  else: l[0] + sum(l[1])
+}
+
+def append(a, b) {
+  if a == false: b
+  else: if b == false: a
+  else: if a[1] == false:
+    if isNum(b): (a[0], list(b))
+    else: (a[0], b)
+  else: (a[0], append(a[1], b))
+}
+
+def reverse(l) {
+  if l[1] == false: l
+  else: append(reverse(l[1]), l[0])
+}
+
+def map(f, l) {
+  if l == false: l
+  else: (f(l[0]), map(f, l[1]))
+}
+
+def reduce(f, l, init) {
+  if l == false: init
+  else: reduce(f, l[1], f(init, l[0]))
+}
+
+let l = (4, (3, (2, list(1)))) in
+begin
+  print(l);
+  print(head(l));
+  print(tail(l));
+  print(len(l));
+  print(idx(l, 2));
+  print(sum(l));
+  print(reverse(l));
+
+  print(map((\x -> x * 2), l));
+
+  print(reduce((\x y -> x * y), l, 1));
+
+  0;
+end

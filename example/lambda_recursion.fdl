@@ -1,0 +1,12 @@
+def callfn(p, x) {
+ (p[0])(x)
+}
+
+def sum(x) {
+  let t = (0,0) in
+  let f = (\x -> (if x == 0: 0 else: x + callfn(t, (x - 1)))) in
+  let u = t[0] = f in
+  callfn(t,x)
+}
+
+sum(4)

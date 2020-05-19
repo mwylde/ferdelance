@@ -1,0 +1,4 @@
+def g(f, x) {
+  f(x * 2)
+}
+let y = 5 in g((\x -> x * y), 2)

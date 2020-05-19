@@ -1,0 +1,5 @@
+def sum(a, s) {
+  if a == 0: s
+  else: sum(a - 1, s + a)
+}
+sum(input(0), 0)

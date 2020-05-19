@@ -1,0 +1,7 @@
+def fib(a) {
+  if a == 0: 1
+  else: if a == 1: 1
+    else: fib(a - 1) + fib(a - 2)
+}
+
+fib(43)

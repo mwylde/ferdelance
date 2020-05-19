@@ -1,0 +1,18 @@
+[package]
+name = "ferdelance"
+version = "1.0.0"
+authors = ["Micah Wylde <micah@micahw.com>"]
+edition = "2018"
+build = "build.rs"
+
+[dependencies]
+tempfile = "3"
+clap = "2.33.0"
+log = "0.4.8"
+stderrlog = "0.4.3"
+lalrpop-util = "0.19.0"
+regex = "1"
+lazy_static = "1.4" 
+ 
+[build-dependencies]
+lalrpop = {version = "0.19.0", features = ["lexer"]}

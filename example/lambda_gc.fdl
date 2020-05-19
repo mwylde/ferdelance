@@ -1,0 +1,11 @@
+def g(x) {
+  let y = 6,
+      f = (\x -> x + y) in 17
+}
+
+let y = 13, h = (\x -> x * y) in
+
+begin
+  g(1);
+  h(2);
+end

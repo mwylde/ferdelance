@@ -1,0 +1,11 @@
+def g(x) {
+  let y = 6,
+      z = 9,
+      f = (y, z, 5) in 17
+}
+
+let y = 13, h = (\x -> x * y) in
+begin
+  print(g(1));
+  h(2);
+end

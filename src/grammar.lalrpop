@@ -1,0 +1,169 @@
+use std::str::FromStr;
+use crate::ast::*;
+use lalrpop_util::ParseError;
+
+grammar;
+
+match {
+   "(" => LPAREN,
+   ")" => RPAREN,
+   "[" => LBRACKET,
+   "]" => RBRACKET,
+   "{" => LBRACE,
+   "}" => RBRACE,
+   "," => COMMA,
+   ":" => COLON,
+   ";" => SEMICOLON,
+   "+" => PLUS,
+   "-" => MINUS,
+   "*" => TIMES,
+   "/" => DIVIDE,
+   "%" => PERCENT,
+   "==" => EQUALS_EQUALS,
+   "=" => EQUALS,
+   "<" => LESS,
+   ">" => GREATER,
+
+   "true" => TRUE,
+   "false" => FALSE,
+   "def" => DEF,
+   "let" => LET,
+   "in" => IN,
+   "if" => IF,
+   "else" => ELSE,
+   "begin" => BEGIN,
+   "end" => END,
+   "\\" => BACKSLASH,
+   "->" => ARROW,
+
+   "add1" => ADD1,
+   "sub1" => SUB1,
+   "isNum" => ISNUM,
+   "isBool" => ISBOOL,
+   "isTuple" => ISTUPLE,
+
+   r"[a-zA-Z_][a-zA-Z_0-9]*" => IDENT,
+   r"[0-9]+" => NUM,
+
+    // Skip whitespace and comments
+    r"\s*" => { },
+    r"//[^\n\r]*[\n\r]*" => { }, // `// comment`
+    r"/\*([^\*]*\*+[^\*/])*([^\*]*\*+|[^\*])*\*/" => { }, // `/* comment */`
+}
+
+
+// utils
+Tier<BinOp, NextTier>: Expr = {
+    <l: Tier<BinOp, NextTier>> <o:BinOp> <r:NextTier> => Expr::Prim2(o, Box::new(l), Box::new(r)),
+    NextTier
+};
+
+CommaSeparated<T>: Vec<T> = {
+  <v:(<T> COMMA)*> <e:T?> => match e {
+    None => v,
+    Some(e) => {
+      let mut v = v;
+      v.push(e);
+      v
+    }
+  }
+};
+
+CommaSeparated2<T>: Vec<T> = {
+  <v:(<T> COMMA)+> <w:T> => {
+    let mut v= v;
+    v.push(w);
+    v
+  },
+};
+
+// lang
+pub Program: Program = <decls:(<Decl>)*> <init:Expr> => Program { <> };
+
+pub Decl: Decl = DEF <name:IdentStr> LPAREN <params:CommaSeparated<IdentStr>> RPAREN LBRACE <body:Expr> RBRACE =>
+  Decl { <> };
+
+pub Expr: Expr = {
+  Comparison,
+  Let,
+  If,
+  Begin,
+};
+
+LetBinding: (String, Expr) = <IdentStr> EQUALS <Expr> => (<>);
+
+Let: Expr = {
+  LET <bs:CommaSeparated<LetBinding>> IN <e:Expr> => Expr::Let(bs, Box::new(e))
+}
+
+If: Expr = IF <cond: Expr> COLON <t: Expr> ELSE COLON <f: Expr> =>
+  Expr::If(Box::new(cond), Box::new(t), Box::new(f));
+
+Begin: Expr = BEGIN <es:(<Expr> SEMICOLON)+> END => Expr::Block(<>);
+
+
+// loosest
+ComparisonOp: BinOp = {
+  LESS => BinOp::Less,
+  GREATER => BinOp::Greater,
+  EQUALS_EQUALS => BinOp::Equal,
+};
+
+Comparison = Tier<ComparisonOp, PlusMinus>;
+
+PlusMinusOp: BinOp = {
+  PLUS => BinOp::Plus,
+  MINUS => BinOp::Minus,
+  PERCENT => BinOp::Mod,
+};
+PlusMinus = Tier<PlusMinusOp, Factor>;
+
+FactorOp: BinOp = {
+    TIMES => BinOp::Times,
+    DIVIDE => BinOp::Divide,
+};
+Factor = Tier<FactorOp, App>;
+
+App: Expr = {
+  <t: App> LBRACKET <i: Expr> RBRACKET EQUALS <v: Term> =>
+    Expr::SetItem(Box::new(t), Box::new(i), Box::new(v)),
+  <t: App> LBRACKET <i: Expr> RBRACKET => Expr::GetItem(Box::new(t), Box::new(i)),
+  <o:Prim1Op> LPAREN <s:Expr> RPAREN => Expr::Prim1(o, Box::new(s)),
+  <f: App> LPAREN <es: CommaSeparated<Expr>> RPAREN => Expr::App(Box::new(f), es),
+  Lambda,
+  Term,
+}
+
+Lambda: Expr = LPAREN BACKSLASH <ps:(<IdentStr>)+> ARROW <e:Expr> RPAREN => Expr::Lambda(ps, Box::new(e));
+
+// tightest
+
+Term: Expr = {
+  NUM =>? i64::from_str(<>).map(|n| Expr::Number(n)).map_err(|_|
+    ParseError::User { error: "Number cannot be represented in 64 bits" }),
+  Bool,
+  Ident,
+  MINUS <t:Term> => match t {
+    Expr::Number(n) => Expr::Number(-n),
+    t => Expr::Prim1(MonOp::Neg, Box::new(t)),
+  },
+  LPAREN <CommaSeparated2<Expr>> RPAREN => Expr::Tuple(<>),
+  LPAREN <Expr> RPAREN,
+};
+
+Prim1Op: MonOp = {
+  ADD1 => MonOp::Add1,
+  SUB1 => MonOp::Sub1,
+  ISNUM => MonOp::IsNum,
+  ISBOOL => MonOp::IsBool,
+  ISTUPLE => MonOp::IsTuple,
+};
+
+IdentStr: String = <s:IDENT> => s.to_string();
+
+Ident: Expr = <IdentStr> => Expr::Id(<>);
+
+Bool: Expr = {
+  TRUE => Expr::Bool(true),
+  FALSE => Expr::Bool(false),
+}
